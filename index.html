@@ -187,6 +187,11 @@
             color: var(--light);
         }
         
+        .btn-warning {
+            background: var(--warning);
+            color: var(--dark);
+        }
+        
         .stats-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -371,6 +376,71 @@
             margin-bottom: 10px;
             line-height: 1.5;
         }
+        
+        .month-indicator {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        .remaining-income {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--warning);
+        }
+        
+        .scenario-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .scenario-option {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .scenario-option.selected {
+            background: var(--accent);
+            color: var(--dark);
+        }
+        
+        .account-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        
+        .account-option {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .account-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .account-option.selected {
+            background: var(--accent);
+            color: var(--dark);
+        }
     </style>
 </head>
 <body>
@@ -389,13 +459,15 @@
             <p>Each round, a random scenario will affect your finances. Make smart choices to grow your wealth!</p>
         </div>
         
+        <div class="month-indicator" id="month-indicator">Month 1: September</div>
+        
         <div class="stats-panel">
             <div class="stat-card">
                 <div>Total Balance</div>
                 <div class="stat-value" id="total-balance">$100</div>
             </div>
             <div class="stat-card">
-                <div>Current Round</div>
+                <div>Current Month</div>
                 <div class="stat-value" id="current-round">1</div>
             </div>
             <div class="stat-card">
@@ -412,6 +484,8 @@
             <div class="panel accounts-panel">
                 <h2>Your Accounts</h2>
                 
+                <div class="remaining-income" id="remaining-income">Remaining Income to Distribute: $100</div>
+                
                 <div class="account">
                     <div class="account-header">
                         <div class="account-name">Chequing Account</div>
@@ -419,7 +493,7 @@
                     </div>
                     <div>For daily expenses - no growth</div>
                     <div class="account-controls">
-                        <input type="number" id="chequing-input" placeholder="Amount">
+                        <input type="number" id="chequing-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('chequing')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('chequing')">Withdraw</button>
                     </div>
@@ -432,7 +506,7 @@
                     </div>
                     <div>Tax-Free Savings - grows 2-5% monthly</div>
                     <div class="account-controls">
-                        <input type="number" id="tfsa-input" placeholder="Amount">
+                        <input type="number" id="tfsa-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('tfsa')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('tfsa')">Withdraw</button>
                     </div>
@@ -445,14 +519,14 @@
                     </div>
                     <div>Retirement Savings - grows 3-6% monthly</div>
                     <div class="account-controls">
-                        <input type="number" id="rrsp-input" placeholder="Amount">
+                        <input type="number" id="rrsp-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('rrsp')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('rrsp')">Withdraw</button>
                     </div>
                 </div>
                 
                 <div class="round-info">
-                    <div>Round Progress</div>
+                    <div>Game Progress</div>
                     <div class="progress-bar">
                         <div class="progress" id="round-progress"></div>
                     </div>
@@ -466,7 +540,7 @@
                     <div class="scenario-title">Welcome to Making Cents of Math!</div>
                     <div class="scenario-description">
                         Distribute your $100 monthly income between your accounts. 
-                        Then click "Next Round" to see what financial scenario awaits you!
+                        Then click "Next Month" to see what financial scenario awaits you!
                     </div>
                     <div class="scenario-impact neutral">Good luck with your financial journey!</div>
                 </div>
@@ -474,17 +548,31 @@
         </div>
         
         <div class="actions-panel">
-            <button class="action-btn btn-primary" onclick="nextRound()">Next Round</button>
-            <button class="action-btn btn-success" onclick="distributeIncome()">Distribute Income</button>
+            <button class="action-btn btn-primary" onclick="nextRound()">Next Month</button>
+            <button class="action-btn btn-success" onclick="distributeIncome()">Distribute Evenly</button>
             <button class="action-btn" onclick="resetGame()">Reset Game</button>
         </div>
     </div>
     
     <div class="modal" id="round-modal">
         <div class="modal-content">
-            <h2 id="modal-title">Round Complete!</h2>
+            <h2 id="modal-title">Month Complete!</h2>
             <p id="modal-message">Your accounts have been updated based on this month's scenario.</p>
             <button class="action-btn btn-primary" onclick="closeModal()">Continue</button>
+        </div>
+    </div>
+    
+    <div class="modal" id="scenario-modal">
+        <div class="modal-content">
+            <h2 id="scenario-modal-title">Financial Decision</h2>
+            <p id="scenario-modal-description">How would you like to handle this situation?</p>
+            <div id="scenario-options-container" class="scenario-options"></div>
+            <div id="account-selector-container" class="account-selector" style="display: none;">
+                <div class="account-option" data-account="chequing">Chequing</div>
+                <div class="account-option" data-account="tfsa">TFSA</div>
+                <div class="account-option" data-account="rrsp">RRSP</div>
+            </div>
+            <button class="action-btn btn-primary" id="scenario-confirm-btn" onclick="confirmScenarioChoice()" style="margin-top: 20px;">Confirm Choice</button>
         </div>
     </div>
     
@@ -502,6 +590,7 @@
             round: 1,
             totalRounds: 12,
             monthlyIncome: 100,
+            remainingIncome: 100,
             accounts: {
                 chequing: 50,
                 tfsa: 30,
@@ -510,7 +599,14 @@
             incomeDistributed: false,
             currentScenario: null,
             totalBalance: 100,
-            previousBalance: 100
+            previousBalance: 100,
+            months: [
+                "September", "October", "November", "December", 
+                "January", "February", "March", "April", 
+                "May", "June", "July", "August"
+            ],
+            selectedScenarioOption: null,
+            selectedAccount: null
         };
 
         // Financial scenarios
@@ -518,64 +614,91 @@
             {
                 title: "Bubble Tea with Friends",
                 description: "Your friends invite you for bubble tea. It costs $10.",
-                impact: -10,
-                account: "chequing",
-                type: "negative"
+                options: [
+                    { text: "Go with friends", impact: -10, account: "chequing" },
+                    { text: "Skip this time", impact: 0, account: "chequing" }
+                ],
+                type: "expense"
             },
             {
                 title: "Car Trouble",
                 description: "Your car breaks down and needs repairs. It costs $50.",
-                impact: -50,
-                account: "chequing",
-                type: "negative"
+                options: [
+                    { text: "Pay for repairs", impact: -50, account: "chequing" },
+                    { text: "Use public transit", impact: -10, account: "chequing" }
+                ],
+                type: "expense"
             },
             {
-                title: "TFSA Growth",
-                description: "Your TFSA investments performed well this month!",
-                impact: 5, // percentage
-                account: "tfsa",
-                type: "positive"
-            },
-            {
-                title: "RRSP Growth",
-                description: "Your retirement savings grew significantly!",
-                impact: 6, // percentage
-                account: "rrsp",
-                type: "positive"
+                title: "Investment Opportunity",
+                description: "You have a chance to invest in a promising startup.",
+                options: [
+                    { text: "Invest $30", impact: -30, account: "tfsa", growth: 10 },
+                    { text: "Invest $50", impact: -50, account: "tfsa", growth: 15 },
+                    { text: "Don't invest", impact: 0, account: "chequing" }
+                ],
+                type: "investment"
             },
             {
                 title: "Unexpected Gift",
-                description: "Your relative sends you $25 as a gift.",
-                impact: 25,
-                account: "chequing",
-                type: "positive"
+                description: "Your relative sends you money as a gift.",
+                options: [
+                    { text: "Receive $25", impact: 25, account: "chequing" },
+                    { text: "Receive $50", impact: 50, account: "chequing" }
+                ],
+                type: "income"
             },
             {
                 title: "Phone Bill",
                 description: "Your monthly phone bill is due. It costs $40.",
-                impact: -40,
-                account: "chequing",
-                type: "negative"
+                options: [
+                    { text: "Pay the bill", impact: -40, account: "chequing" },
+                    { text: "Switch to a cheaper plan", impact: -25, account: "chequing" }
+                ],
+                type: "expense"
             },
             {
                 title: "Part-Time Job",
-                description: "You earn an extra $30 from a part-time job.",
-                impact: 30,
-                account: "chequing",
-                type: "positive"
+                description: "You have an opportunity to earn extra money.",
+                options: [
+                    { text: "Work 10 hours ($30)", impact: 30, account: "chequing" },
+                    { text: "Work 20 hours ($60)", impact: 60, account: "chequing" },
+                    { text: "Focus on studies", impact: 0, account: "chequing" }
+                ],
+                type: "income"
             },
             {
                 title: "Textbook Purchase",
                 description: "You need to buy a new textbook for school. It costs $60.",
-                impact: -60,
-                account: "chequing",
-                type: "negative"
+                options: [
+                    { text: "Buy new", impact: -60, account: "chequing" },
+                    { text: "Buy used", impact: -35, account: "chequing" },
+                    { text: "Borrow from library", impact: 0, account: "chequing" }
+                ],
+                type: "expense"
+            },
+            {
+                title: "Bonus from Work",
+                description: "You received a bonus from your part-time job.",
+                options: [
+                    { text: "Add to Chequing", impact: 40, account: "chequing" },
+                    { text: "Invest in TFSA", impact: 40, account: "tfsa", growth: 5 },
+                    { text: "Save for retirement", impact: 40, account: "rrsp", growth: 7 }
+                ],
+                type: "income"
             }
         ];
 
         // Initialize the game
         function initGame() {
+            updateMonthIndicator();
             updateUI();
+        }
+
+        // Update month indicator
+        function updateMonthIndicator() {
+            const monthName = gameState.months[(gameState.round - 1) % 12];
+            document.getElementById('month-indicator').textContent = `Month ${gameState.round}: ${monthName}`;
         }
 
         // Update all UI elements based on game state
@@ -604,10 +727,14 @@
             
             // Update round status
             const statusElement = document.getElementById('round-status');
+            const remainingIncomeElement = document.getElementById('remaining-income');
+            
             if (gameState.incomeDistributed) {
-                statusElement.textContent = "Income distributed! Click 'Next Round' to continue.";
+                statusElement.textContent = "Income distributed! Click 'Next Month' to continue.";
+                remainingIncomeElement.textContent = "Income fully distributed";
             } else {
                 statusElement.textContent = `Distribute your $${gameState.monthlyIncome} monthly income`;
+                remainingIncomeElement.textContent = `Remaining Income to Distribute: $${gameState.remainingIncome}`;
             }
         }
 
@@ -616,11 +743,26 @@
             const input = document.getElementById(`${account}-input`);
             const amount = parseInt(input.value) || 0;
             
-            if (amount > 0) {
-                gameState.accounts[account] += amount;
-                input.value = '';
+            if (amount <= 0) {
+                alert("Please enter a positive amount!");
+                return;
+            }
+            
+            if (amount > gameState.remainingIncome) {
+                alert(`You only have $${gameState.remainingIncome} left to distribute this month!`);
+                return;
+            }
+            
+            gameState.accounts[account] += amount;
+            gameState.remainingIncome -= amount;
+            input.value = '';
+            updateUI();
+            animateDeposit(account);
+            
+            // Check if all income has been distributed
+            if (gameState.remainingIncome <= 0) {
+                gameState.incomeDistributed = true;
                 updateUI();
-                animateDeposit(account);
             }
         }
 
@@ -629,14 +771,28 @@
             const input = document.getElementById(`${account}-input`);
             const amount = parseInt(input.value) || 0;
             
-            if (amount > 0 && amount <= gameState.accounts[account]) {
-                gameState.accounts[account] -= amount;
-                input.value = '';
-                updateUI();
-                animateWithdrawal(account);
-            } else if (amount > gameState.accounts[account]) {
-                alert(`You don't have enough money in your ${account.toUpperCase()} account!`);
+            if (amount <= 0) {
+                alert("Please enter a positive amount!");
+                return;
             }
+            
+            if (amount > gameState.accounts[account]) {
+                alert(`You don't have enough money in your ${account.toUpperCase()} account!`);
+                return;
+            }
+            
+            // Check if this would exceed the monthly income limit
+            if (gameState.remainingIncome + amount > gameState.monthlyIncome) {
+                alert("You can't withdraw more than you've deposited this month!");
+                return;
+            }
+            
+            gameState.accounts[account] -= amount;
+            gameState.remainingIncome += amount;
+            gameState.incomeDistributed = false;
+            input.value = '';
+            updateUI();
+            animateWithdrawal(account);
         }
 
         // Distribute monthly income evenly
@@ -648,6 +804,7 @@
             gameState.accounts.tfsa += perAccount;
             gameState.accounts.rrsp += (income - perAccount * 2); // Handle remainder
             
+            gameState.remainingIncome = 0;
             gameState.incomeDistributed = true;
             updateUI();
             
@@ -669,26 +826,11 @@
             const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
             gameState.currentScenario = randomScenario;
             
-            // Apply scenario effects
-            applyScenario(randomScenario);
+            // Display scenario with options
+            displayScenarioWithOptions(randomScenario);
             
             // Update previous balance for next round
             gameState.previousBalance = gameState.totalBalance;
-            
-            // Update UI
-            updateUI();
-            
-            // Display scenario
-            displayScenario(randomScenario);
-            
-            // Move to next round
-            gameState.round++;
-            gameState.incomeDistributed = false;
-            
-            // Check if game is over
-            if (gameState.round > gameState.totalRounds) {
-                endGame();
-            }
         }
 
         // Apply growth to savings accounts
@@ -700,38 +842,150 @@
             // RRSP growth (3-6%)
             const rrspGrowth = Math.floor(gameState.accounts.rrsp * (3 + Math.random() * 3) / 100);
             gameState.accounts.rrsp += rrspGrowth;
+            
+            updateUI();
         }
 
-        // Apply scenario effects
-        function applyScenario(scenario) {
-            if (scenario.type === "positive" || scenario.type === "negative") {
-                if (scenario.account === "tfsa" || scenario.account === "rrsp") {
-                    // Percentage-based growth for investment accounts
-                    const growth = Math.floor(gameState.accounts[scenario.account] * scenario.impact / 100);
-                    gameState.accounts[scenario.account] += growth;
-                } else {
-                    // Fixed amount for chequing account
-                    gameState.accounts[scenario.account] += scenario.impact;
+        // Display scenario with options for the player to choose
+        function displayScenarioWithOptions(scenario) {
+            document.getElementById('scenario-modal-title').textContent = scenario.title;
+            document.getElementById('scenario-modal-description').textContent = scenario.description;
+            
+            const optionsContainer = document.getElementById('scenario-options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Reset selections
+            gameState.selectedScenarioOption = null;
+            gameState.selectedAccount = null;
+            
+            // Create option elements
+            scenario.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'scenario-option';
+                optionElement.textContent = option.text;
+                optionElement.dataset.index = index;
+                
+                optionElement.addEventListener('click', function() {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.scenario-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Store selected option
+                    gameState.selectedScenarioOption = option;
+                    
+                    // Show account selector if needed
+                    const accountSelector = document.getElementById('account-selector-container');
+                    if (option.account === "choose") {
+                        accountSelector.style.display = 'flex';
+                        
+                        // Add click handlers for account options
+                        document.querySelectorAll('.account-option').forEach(accOpt => {
+                            accOpt.addEventListener('click', function() {
+                                document.querySelectorAll('.account-option').forEach(ao => {
+                                    ao.classList.remove('selected');
+                                });
+                                this.classList.add('selected');
+                                gameState.selectedAccount = this.dataset.account;
+                            });
+                        });
+                    } else {
+                        accountSelector.style.display = 'none';
+                        gameState.selectedAccount = option.account;
+                    }
+                });
+                
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Show the scenario modal
+            document.getElementById('scenario-modal').style.display = 'flex';
+        }
+
+        // Confirm the player's scenario choice
+        function confirmScenarioChoice() {
+            if (!gameState.selectedScenarioOption) {
+                alert("Please select an option!");
+                return;
+            }
+            
+            if (gameState.selectedScenarioOption.account === "choose" && !gameState.selectedAccount) {
+                alert("Please select an account!");
+                return;
+            }
+            
+            const option = gameState.selectedScenarioOption;
+            const account = gameState.selectedAccount || option.account;
+            
+            // Apply the scenario effect
+            if (option.impact !== 0) {
+                if (option.impact < 0 && Math.abs(option.impact) > gameState.accounts[account]) {
+                    alert(`You don't have enough money in your ${account.toUpperCase()} account for this expense!`);
+                    return;
                 }
+                
+                gameState.accounts[account] += option.impact;
+                
+                // Apply growth if specified
+                if (option.growth) {
+                    const growthAmount = Math.floor(gameState.accounts[account] * option.growth / 100);
+                    gameState.accounts[account] += growthAmount;
+                }
+            }
+            
+            // Close the scenario modal
+            document.getElementById('scenario-modal').style.display = 'none';
+            
+            // Display the scenario in the main panel
+            displayScenario(gameState.currentScenario, option);
+            
+            // Update UI
+            updateUI();
+            
+            // Move to next round
+            gameState.round++;
+            gameState.incomeDistributed = false;
+            gameState.remainingIncome = gameState.monthlyIncome;
+            updateMonthIndicator();
+            
+            // Check if game is over
+            if (gameState.round > gameState.totalRounds) {
+                setTimeout(endGame, 1000);
             }
         }
 
-        // Display the current scenario
-        function displayScenario(scenario) {
+        // Display the current scenario in the main panel
+        function displayScenario(scenario, option) {
             const scenarioCard = document.getElementById('scenario-card');
+            const impactType = option.impact > 0 ? "positive" : option.impact < 0 ? "negative" : "neutral";
+            
+            let impactText = "";
+            if (option.impact > 0) {
+                impactText = `+$${option.impact} to ${(gameState.selectedAccount || option.account).toUpperCase()}`;
+            } else if (option.impact < 0) {
+                impactText = `-$${Math.abs(option.impact)} from ${(gameState.selectedAccount || option.account).toUpperCase()}`;
+            } else {
+                impactText = "No financial impact";
+            }
+            
+            if (option.growth) {
+                impactText += ` with ${option.growth}% growth`;
+            }
+            
             scenarioCard.innerHTML = `
                 <div class="scenario-title">${scenario.title}</div>
                 <div class="scenario-description">${scenario.description}</div>
-                <div class="scenario-impact ${scenario.type}">
-                    ${scenario.type === "positive" ? "+" : ""}$${scenario.impact} 
-                    ${scenario.account === "tfsa" || scenario.account === "rrsp" ? "% growth" : ""} 
-                    to ${scenario.account.toUpperCase()}
+                <div class="scenario-impact ${impactType}">
+                    ${impactText}
                 </div>
             `;
             
             // Show modal with round results
-            showModal(`Round ${gameState.round - 1} Complete`, 
-                     `Your accounts have been updated based on this month's scenario: "${scenario.title}"`);
+            showModal(`Month ${gameState.round - 1} Complete`, 
+                     `Your accounts have been updated based on your decision: "${option.text}"`);
         }
 
         // Show modal with custom title and message
@@ -783,6 +1037,7 @@
             gameState.accounts.tfsa = 30;
             gameState.accounts.rrsp = 20;
             gameState.incomeDistributed = false;
+            gameState.remainingIncome = 100;
             gameState.currentScenario = null;
             gameState.totalBalance = 100;
             gameState.previousBalance = 100;
@@ -792,11 +1047,12 @@
                 <div class="scenario-title">Welcome to Making Cents of Math!</div>
                 <div class="scenario-description">
                     Distribute your $100 monthly income between your accounts. 
-                    Then click "Next Round" to see what financial scenario awaits you!
+                    Then click "Next Month" to see what financial scenario awaits you!
                 </div>
                 <div class="scenario-impact neutral">Good luck with your financial journey!</div>
             `;
             
+            updateMonthIndicator();
             updateUI();
         }
 
