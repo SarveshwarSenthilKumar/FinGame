@@ -390,6 +390,10 @@
             font-size: 1.2rem;
             margin-bottom: 15px;
             color: var(--warning);
+            font-weight: bold;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
         }
         
         .scenario-options {
@@ -406,6 +410,7 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            min-width: 150px;
         }
         
         .scenario-option:hover {
@@ -416,6 +421,7 @@
         .scenario-option.selected {
             background: var(--accent);
             color: var(--dark);
+            font-weight: bold;
         }
         
         .account-selector {
@@ -440,6 +446,20 @@
         .account-option.selected {
             background: var(--accent);
             color: var(--dark);
+            font-weight: bold;
+        }
+        
+        .money-amount {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--accent);
+        }
+        
+        .impact-display {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
@@ -572,6 +592,7 @@
                 <div class="account-option" data-account="tfsa">TFSA</div>
                 <div class="account-option" data-account="rrsp">RRSP</div>
             </div>
+            <div id="impact-display" class="impact-display" style="display: none;"></div>
             <button class="action-btn btn-primary" id="scenario-confirm-btn" onclick="confirmScenarioChoice()" style="margin-top: 20px;">Confirm Choice</button>
         </div>
     </div>
@@ -609,23 +630,25 @@
             selectedAccount: null
         };
 
-        // Financial scenarios
+        // Financial scenarios - FIXED to make sense
         const scenarios = [
             {
-                title: "Bubble Tea with Friends",
-                description: "Your friends invite you for bubble tea. It costs $10.",
+                title: "Unexpected Gift",
+                description: "Your relative sends you money as a gift. How much would you like to receive?",
                 options: [
-                    { text: "Go with friends", impact: -10, account: "chequing" },
-                    { text: "Skip this time", impact: 0, account: "chequing" }
+                    { text: "Receive $50", impact: 50, account: "chequing" },
+                    { text: "Invest $50 in TFSA", impact: 50, account: "tfsa", growth: 5 },
+                    { text: "Save $50 for retirement", impact: 50, account: "rrsp", growth: 7 }
                 ],
-                type: "expense"
+                type: "income"
             },
             {
                 title: "Car Trouble",
-                description: "Your car breaks down and needs repairs. It costs $50.",
+                description: "Your car breaks down and needs repairs. How will you handle this?",
                 options: [
-                    { text: "Pay for repairs", impact: -50, account: "chequing" },
-                    { text: "Use public transit", impact: -10, account: "chequing" }
+                    { text: "Pay $50 for full repairs", impact: -50, account: "chequing" },
+                    { text: "Pay $25 for basic repairs", impact: -25, account: "chequing" },
+                    { text: "Use bike/transit (save money)", impact: 0, account: "chequing" }
                 ],
                 type: "expense"
             },
@@ -633,57 +656,59 @@
                 title: "Investment Opportunity",
                 description: "You have a chance to invest in a promising startup.",
                 options: [
-                    { text: "Invest $30", impact: -30, account: "tfsa", growth: 10 },
-                    { text: "Invest $50", impact: -50, account: "tfsa", growth: 15 },
-                    { text: "Don't invest", impact: 0, account: "chequing" }
+                    { text: "Invest $30 (low risk)", impact: -30, account: "tfsa", growth: 8 },
+                    { text: "Invest $50 (medium risk)", impact: -50, account: "tfsa", growth: 12 },
+                    { text: "Don't invest (no risk)", impact: 0, account: "chequing" }
                 ],
                 type: "investment"
             },
             {
-                title: "Unexpected Gift",
-                description: "Your relative sends you money as a gift.",
+                title: "Part-Time Job Offer",
+                description: "You're offered a part-time job. How many hours will you work?",
                 options: [
-                    { text: "Receive $25", impact: 25, account: "chequing" },
-                    { text: "Receive $50", impact: 50, account: "chequing" }
+                    { text: "Work 5 hours ($25)", impact: 25, account: "chequing" },
+                    { text: "Work 10 hours ($50)", impact: 50, account: "chequing" },
+                    { text: "Work 15 hours ($75)", impact: 75, account: "chequing" }
                 ],
                 type: "income"
             },
             {
-                title: "Phone Bill",
-                description: "Your monthly phone bill is due. It costs $40.",
+                title: "Phone Upgrade",
+                description: "Your phone is getting old. What will you do?",
                 options: [
-                    { text: "Pay the bill", impact: -40, account: "chequing" },
-                    { text: "Switch to a cheaper plan", impact: -25, account: "chequing" }
-                ],
-                type: "expense"
-            },
-            {
-                title: "Part-Time Job",
-                description: "You have an opportunity to earn extra money.",
-                options: [
-                    { text: "Work 10 hours ($30)", impact: 30, account: "chequing" },
-                    { text: "Work 20 hours ($60)", impact: 60, account: "chequing" },
-                    { text: "Focus on studies", impact: 0, account: "chequing" }
-                ],
-                type: "income"
-            },
-            {
-                title: "Textbook Purchase",
-                description: "You need to buy a new textbook for school. It costs $60.",
-                options: [
-                    { text: "Buy new", impact: -60, account: "chequing" },
-                    { text: "Buy used", impact: -35, account: "chequing" },
-                    { text: "Borrow from library", impact: 0, account: "chequing" }
+                    { text: "Buy new phone ($60)", impact: -60, account: "chequing" },
+                    { text: "Buy refurbished ($35)", impact: -35, account: "chequing" },
+                    { text: "Keep current phone", impact: 0, account: "chequing" }
                 ],
                 type: "expense"
             },
             {
                 title: "Bonus from Work",
-                description: "You received a bonus from your part-time job.",
+                description: "You received a bonus! How will you use it?",
                 options: [
-                    { text: "Add to Chequing", impact: 40, account: "chequing" },
-                    { text: "Invest in TFSA", impact: 40, account: "tfsa", growth: 5 },
-                    { text: "Save for retirement", impact: 40, account: "rrsp", growth: 7 }
+                    { text: "Spend on fun ($40)", impact: 40, account: "chequing" },
+                    { text: "Save in TFSA ($40)", impact: 40, account: "tfsa", growth: 4 },
+                    { text: "Invest for retirement ($40)", impact: 40, account: "rrsp", growth: 6 }
+                ],
+                type: "income"
+            },
+            {
+                title: "School Supplies",
+                description: "You need supplies for the new semester.",
+                options: [
+                    { text: "Buy all new ($45)", impact: -45, account: "chequing" },
+                    { text: "Buy some used ($25)", impact: -25, account: "chequing" },
+                    { text: "Share with friends ($15)", impact: -15, account: "chequing" }
+                ],
+                type: "expense"
+            },
+            {
+                title: "Tax Refund",
+                description: "You got a tax refund! How will you allocate it?",
+                options: [
+                    { text: "All to spending ($30)", impact: 30, account: "chequing" },
+                    { text: "Split spending/saving", impact: 30, account: "choose" },
+                    { text: "All to retirement ($30)", impact: 30, account: "rrsp", growth: 5 }
                 ],
                 type: "income"
             }
@@ -725,16 +750,25 @@
             const progressPercent = (gameState.round / gameState.totalRounds) * 100;
             document.getElementById('round-progress').style.width = `${progressPercent}%`;
             
-            // Update round status
+            // Update income distribution status
+            updateIncomeStatus();
+        }
+
+        // Update income distribution status
+        function updateIncomeStatus() {
             const statusElement = document.getElementById('round-status');
             const remainingIncomeElement = document.getElementById('remaining-income');
             
             if (gameState.incomeDistributed) {
-                statusElement.textContent = "Income distributed! Click 'Next Month' to continue.";
-                remainingIncomeElement.textContent = "Income fully distributed";
+                statusElement.textContent = "Income fully distributed! Click 'Next Month' to continue.";
+                remainingIncomeElement.textContent = "Income Fully Distributed";
+                remainingIncomeElement.style.color = "#4CAF50";
+                remainingIncomeElement.style.background = "rgba(76, 175, 80, 0.2)";
             } else {
                 statusElement.textContent = `Distribute your $${gameState.monthlyIncome} monthly income`;
                 remainingIncomeElement.textContent = `Remaining Income to Distribute: $${gameState.remainingIncome}`;
+                remainingIncomeElement.style.color = "#FFC107";
+                remainingIncomeElement.style.background = "rgba(255, 193, 7, 0.2)";
             }
         }
 
@@ -762,7 +796,7 @@
             // Check if all income has been distributed
             if (gameState.remainingIncome <= 0) {
                 gameState.incomeDistributed = true;
-                updateUI();
+                updateIncomeStatus();
             }
         }
 
@@ -858,11 +892,20 @@
             gameState.selectedScenarioOption = null;
             gameState.selectedAccount = null;
             
+            // Hide account selector and impact display initially
+            document.getElementById('account-selector-container').style.display = 'none';
+            document.getElementById('impact-display').style.display = 'none';
+            
             // Create option elements
             scenario.options.forEach((option, index) => {
                 const optionElement = document.createElement('div');
                 optionElement.className = 'scenario-option';
-                optionElement.textContent = option.text;
+                
+                // Format the option text with money amounts highlighted
+                let optionText = option.text;
+                optionText = optionText.replace(/\$(\d+)/g, '<span class="money-amount">$$1</span>');
+                optionElement.innerHTML = optionText;
+                
                 optionElement.dataset.index = index;
                 
                 optionElement.addEventListener('click', function() {
@@ -882,6 +925,12 @@
                     if (option.account === "choose") {
                         accountSelector.style.display = 'flex';
                         
+                        // Reset account selections
+                        document.querySelectorAll('.account-option').forEach(ao => {
+                            ao.classList.remove('selected');
+                        });
+                        gameState.selectedAccount = null;
+                        
                         // Add click handlers for account options
                         document.querySelectorAll('.account-option').forEach(accOpt => {
                             accOpt.addEventListener('click', function() {
@@ -890,11 +939,13 @@
                                 });
                                 this.classList.add('selected');
                                 gameState.selectedAccount = this.dataset.account;
+                                updateImpactDisplay(option, this.dataset.account);
                             });
                         });
                     } else {
                         accountSelector.style.display = 'none';
                         gameState.selectedAccount = option.account;
+                        updateImpactDisplay(option, option.account);
                     }
                 });
                 
@@ -903,6 +954,28 @@
             
             // Show the scenario modal
             document.getElementById('scenario-modal').style.display = 'flex';
+        }
+
+        // Update the impact display based on selected option
+        function updateImpactDisplay(option, account) {
+            const impactDisplay = document.getElementById('impact-display');
+            let impactText = "";
+            
+            if (option.impact > 0) {
+                impactText = `+$${option.impact} to ${account.toUpperCase()}`;
+            } else if (option.impact < 0) {
+                impactText = `-$${Math.abs(option.impact)} from ${account.toUpperCase()}`;
+            } else {
+                impactText = "No financial impact";
+            }
+            
+            if (option.growth) {
+                impactText += ` + ${option.growth}% potential growth`;
+            }
+            
+            impactDisplay.innerHTML = impactText;
+            impactDisplay.className = `impact-display ${option.impact > 0 ? 'positive' : option.impact < 0 ? 'negative' : 'neutral'}`;
+            impactDisplay.style.display = 'block';
         }
 
         // Confirm the player's scenario choice
@@ -945,11 +1018,12 @@
             // Update UI
             updateUI();
             
-            // Move to next round
+            // Move to next round and reset income distribution
             gameState.round++;
             gameState.incomeDistributed = false;
             gameState.remainingIncome = gameState.monthlyIncome;
             updateMonthIndicator();
+            updateIncomeStatus();
             
             // Check if game is over
             if (gameState.round > gameState.totalRounds) {
