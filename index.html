@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Making Cents of Math | Financial Literacy Game</title>
+    <title>Making Cents of Money | Financial Literacy Game</title>
     <style>
         :root {
             --primary: #2E86AB;
@@ -131,6 +131,12 @@
         .account-balance {
             font-size: 1.3rem;
             font-weight: bold;
+        }
+        
+        .account-growth {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 5px;
         }
         
         .account-controls {
@@ -461,12 +467,17 @@
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.1);
         }
+        
+        .withdraw-all-btn {
+            margin-top: 10px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Making Cents of Math</h1>
+            <h1>Making Cents of Money</h1>
             <p class="subtitle">A Financial Literacy Adventure for Middle Schoolers</p>
         </header>
         
@@ -517,6 +528,7 @@
                         <button class="btn-primary" onclick="deposit('chequing')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('chequing')">Withdraw</button>
                     </div>
+                    <button class="withdraw-all-btn btn-warning" onclick="withdrawAll('chequing')">Withdraw All</button>
                 </div>
                 
                 <div class="account">
@@ -525,11 +537,13 @@
                         <div class="account-balance" id="tfsa-balance">$30</div>
                     </div>
                     <div>Tax-Free Savings - grows 2-5% monthly</div>
+                    <div class="account-growth" id="tfsa-growth">Growth this month: $0</div>
                     <div class="account-controls">
                         <input type="number" id="tfsa-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('tfsa')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('tfsa')">Withdraw</button>
                     </div>
+                    <button class="withdraw-all-btn btn-warning" onclick="withdrawAll('tfsa')">Withdraw All</button>
                 </div>
                 
                 <div class="account">
@@ -538,11 +552,13 @@
                         <div class="account-balance" id="rrsp-balance">$20</div>
                     </div>
                     <div>Retirement Savings - grows 3-6% monthly</div>
+                    <div class="account-growth" id="rrsp-growth">Growth this month: $0</div>
                     <div class="account-controls">
                         <input type="number" id="rrsp-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('rrsp')">Deposit</button>
                         <button class="btn-danger" onclick="withdraw('rrsp')">Withdraw</button>
                     </div>
+                    <button class="withdraw-all-btn btn-warning" onclick="withdrawAll('rrsp')">Withdraw All</button>
                 </div>
                 
                 <div class="round-info">
@@ -557,7 +573,7 @@
             <div class="panel scenario-panel">
                 <h2>Financial Scenarios</h2>
                 <div class="scenario-card" id="scenario-card">
-                    <div class="scenario-title">Welcome to Making Cents of Math!</div>
+                    <div class="scenario-title">Welcome to Making Cents of Money!</div>
                     <div class="scenario-description">
                         Distribute your $100 monthly income between your accounts. 
                         Then click "Next Month" to see what financial scenario awaits you!
@@ -617,6 +633,10 @@
                 tfsa: 30,
                 rrsp: 20
             },
+            accountGrowth: {
+                tfsa: 0,
+                rrsp: 0
+            },
             incomeDistributed: false,
             currentScenario: null,
             totalBalance: 100,
@@ -630,13 +650,13 @@
             selectedAccount: null
         };
 
-        // Financial scenarios - FIXED to make sense
+        // Financial scenarios - FIXED and EXPANDED
         const scenarios = [
             {
                 title: "Unexpected Gift",
-                description: "Your relative sends you money as a gift. How much would you like to receive?",
+                description: "Your relative sends you money as a gift. How would you like to receive it?",
                 options: [
-                    { text: "Receive $50", impact: 50, account: "chequing" },
+                    { text: "Receive $50 cash", impact: 50, account: "chequing" },
                     { text: "Invest $50 in TFSA", impact: 50, account: "tfsa", growth: 5 },
                     { text: "Save $50 for retirement", impact: 50, account: "rrsp", growth: 7 }
                 ],
@@ -711,6 +731,46 @@
                     { text: "All to retirement ($30)", impact: 30, account: "rrsp", growth: 5 }
                 ],
                 type: "income"
+            },
+            {
+                title: "Unexpected Medical Bill",
+                description: "You have an unexpected medical expense.",
+                options: [
+                    { text: "Pay full amount ($40)", impact: -40, account: "chequing" },
+                    { text: "Payment plan ($20 now)", impact: -20, account: "chequing" },
+                    { text: "Use emergency fund", impact: -40, account: "tfsa" }
+                ],
+                type: "expense"
+            },
+            {
+                title: "Stock Market Dip",
+                description: "The stock market has dropped significantly.",
+                options: [
+                    { text: "Sell investments (lock in losses)", impact: -30, account: "tfsa" },
+                    { text: "Buy more (bargain prices)", impact: -30, account: "tfsa", growth: 15 },
+                    { text: "Hold and wait", impact: 0, account: "tfsa" }
+                ],
+                type: "investment"
+            },
+            {
+                title: "Side Hustle Opportunity",
+                description: "A friend offers you a chance to earn extra money.",
+                options: [
+                    { text: "Small project ($20)", impact: 20, account: "chequing" },
+                    { text: "Medium project ($40)", impact: 40, account: "chequing" },
+                    { text: "Large project ($60)", impact: 60, account: "chequing" }
+                ],
+                type: "income"
+            },
+            {
+                title: "Subscription Services",
+                description: "You're paying for multiple subscription services.",
+                options: [
+                    { text: "Keep all ($25/month)", impact: -25, account: "chequing" },
+                    { text: "Cancel some ($15/month)", impact: -15, account: "chequing" },
+                    { text: "Cancel all", impact: 0, account: "chequing" }
+                ],
+                type: "expense"
             }
         ];
 
@@ -732,6 +792,10 @@
             document.getElementById('chequing-balance').textContent = `$${gameState.accounts.chequing}`;
             document.getElementById('tfsa-balance').textContent = `$${gameState.accounts.tfsa}`;
             document.getElementById('rrsp-balance').textContent = `$${gameState.accounts.rrsp}`;
+            
+            // Update growth displays
+            document.getElementById('tfsa-growth').textContent = `Growth this month: $${gameState.accountGrowth.tfsa}`;
+            document.getElementById('rrsp-growth').textContent = `Growth this month: $${gameState.accountGrowth.rrsp}`;
             
             // Calculate and update total balance
             gameState.totalBalance = gameState.accounts.chequing + gameState.accounts.tfsa + gameState.accounts.rrsp;
@@ -829,6 +893,30 @@
             animateWithdrawal(account);
         }
 
+        // Withdraw all money from an account
+        function withdrawAll(account) {
+            const amount = gameState.accounts[account];
+            
+            if (amount <= 0) {
+                alert(`Your ${account.toUpperCase()} account is already empty!`);
+                return;
+            }
+            
+            // Check if this would exceed the monthly income limit
+            if (gameState.remainingIncome + amount > gameState.monthlyIncome) {
+                alert("You can't withdraw more than you've deposited this month!");
+                return;
+            }
+            
+            gameState.accounts[account] = 0;
+            gameState.remainingIncome += amount;
+            gameState.incomeDistributed = false;
+            updateUI();
+            animateWithdrawal(account);
+            
+            alert(`Withdrew $${amount} from your ${account.toUpperCase()} account`);
+        }
+
         // Distribute monthly income evenly
         function distributeIncome() {
             const income = gameState.monthlyIncome;
@@ -869,13 +957,19 @@
 
         // Apply growth to savings accounts
         function applyAccountGrowth() {
+            // Reset growth counters
+            gameState.accountGrowth.tfsa = 0;
+            gameState.accountGrowth.rrsp = 0;
+            
             // TFSA growth (2-5%)
             const tfsaGrowth = Math.floor(gameState.accounts.tfsa * (2 + Math.random() * 3) / 100);
             gameState.accounts.tfsa += tfsaGrowth;
+            gameState.accountGrowth.tfsa = tfsaGrowth;
             
             // RRSP growth (3-6%)
             const rrspGrowth = Math.floor(gameState.accounts.rrsp * (3 + Math.random() * 3) / 100);
             gameState.accounts.rrsp += rrspGrowth;
+            gameState.accountGrowth.rrsp = rrspGrowth;
             
             updateUI();
         }
@@ -1006,6 +1100,13 @@
                 if (option.growth) {
                     const growthAmount = Math.floor(gameState.accounts[account] * option.growth / 100);
                     gameState.accounts[account] += growthAmount;
+                    
+                    // Update growth counter for the account
+                    if (account === "tfsa") {
+                        gameState.accountGrowth.tfsa += growthAmount;
+                    } else if (account === "rrsp") {
+                        gameState.accountGrowth.rrsp += growthAmount;
+                    }
                 }
             }
             
@@ -1110,6 +1211,8 @@
             gameState.accounts.chequing = 50;
             gameState.accounts.tfsa = 30;
             gameState.accounts.rrsp = 20;
+            gameState.accountGrowth.tfsa = 0;
+            gameState.accountGrowth.rrsp = 0;
             gameState.incomeDistributed = false;
             gameState.remainingIncome = 100;
             gameState.currentScenario = null;
@@ -1118,7 +1221,7 @@
             
             // Reset scenario card
             document.getElementById('scenario-card').innerHTML = `
-                <div class="scenario-title">Welcome to Making Cents of Math!</div>
+                <div class="scenario-title">Welcome to Making Cents of Money!</div>
                 <div class="scenario-description">
                     Distribute your $100 monthly income between your accounts. 
                     Then click "Next Month" to see what financial scenario awaits you!
