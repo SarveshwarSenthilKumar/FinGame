@@ -472,6 +472,37 @@
             margin-top: 10px;
             width: 100%;
         }
+        
+        .account-details {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .penalty-info {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        
+        .transaction-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .transaction-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .transaction-type {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--accent);
+        }
     </style>
 </head>
 <body>
@@ -485,8 +516,8 @@
             <h3>How to Play</h3>
             <p>Each month, you receive $100 income. Distribute it between your accounts:</p>
             <p><strong>Chequing:</strong> For daily expenses. No growth but easily accessible.</p>
-            <p><strong>TFSA:</strong> Tax-Free Savings Account. Grows 2-5% each month but has withdrawal limits.</p>
-            <p><strong>RRSP:</strong> Retirement Savings. Grows 3-6% each month but can't be withdrawn without penalty.</p>
+            <p><strong>TFSA:</strong> Tax-Free Savings Account. Grows 2-5% each month but has withdrawal penalties.</p>
+            <p><strong>RRSP:</strong> Retirement Savings. Grows 3-6% each month but has withdrawal penalties and taxes.</p>
             <p>Each round, a random scenario will affect your finances. Make smart choices to grow your wealth!</p>
         </div>
         
@@ -523,6 +554,7 @@
                         <div class="account-balance" id="chequing-balance">$50</div>
                     </div>
                     <div>For daily expenses - no growth</div>
+                    <div class="account-details">No penalties for withdrawals</div>
                     <div class="account-controls">
                         <input type="number" id="chequing-input" placeholder="Amount" min="0">
                         <button class="btn-primary" onclick="deposit('chequing')">Deposit</button>
@@ -537,6 +569,7 @@
                         <div class="account-balance" id="tfsa-balance">$30</div>
                     </div>
                     <div>Tax-Free Savings - grows 2-5% monthly</div>
+                    <div class="account-details penalty-info">10% penalty on withdrawals</div>
                     <div class="account-growth" id="tfsa-growth">Growth this month: $0</div>
                     <div class="account-controls">
                         <input type="number" id="tfsa-input" placeholder="Amount" min="0">
@@ -552,6 +585,7 @@
                         <div class="account-balance" id="rrsp-balance">$20</div>
                     </div>
                     <div>Retirement Savings - grows 3-6% monthly</div>
+                    <div class="account-details penalty-info">20% penalty + taxes on withdrawals</div>
                     <div class="account-growth" id="rrsp-growth">Growth this month: $0</div>
                     <div class="account-controls">
                         <input type="number" id="rrsp-input" placeholder="Amount" min="0">
@@ -559,6 +593,25 @@
                         <button class="btn-danger" onclick="withdraw('rrsp')">Withdraw</button>
                     </div>
                     <button class="withdraw-all-btn btn-warning" onclick="withdrawAll('rrsp')">Withdraw All</button>
+                </div>
+                
+                <div class="transaction-section">
+                    <div class="transaction-type">Transfer Between Accounts</div>
+                    <div class="transaction-controls">
+                        <select id="transfer-from">
+                            <option value="chequing">Chequing</option>
+                            <option value="tfsa">TFSA</option>
+                            <option value="rrsp">RRSP</option>
+                        </select>
+                        <span>→</span>
+                        <select id="transfer-to">
+                            <option value="chequing">Chequing</option>
+                            <option value="tfsa">TFSA</option>
+                            <option value="rrsp">RRSP</option>
+                        </select>
+                        <input type="number" id="transfer-amount" placeholder="Amount" min="0">
+                        <button class="btn-primary" onclick="transferMoney()">Transfer</button>
+                    </div>
                 </div>
                 
                 <div class="round-info">
@@ -864,7 +917,7 @@
             }
         }
 
-        // Withdraw money from an account
+        // Withdraw money from an account with penalties
         function withdraw(account) {
             const input = document.getElementById(`${account}-input`);
             const amount = parseInt(input.value) || 0;
@@ -885,15 +938,29 @@
                 return;
             }
             
+            let actualAmount = amount;
+            let penalty = 0;
+            
+            // Apply penalties for savings accounts
+            if (account === 'tfsa') {
+                penalty = Math.floor(amount * 0.1); // 10% penalty
+                actualAmount = amount - penalty;
+                alert(`TFSA withdrawal: $${amount} - $${penalty} penalty = $${actualAmount} received`);
+            } else if (account === 'rrsp') {
+                penalty = Math.floor(amount * 0.2); // 20% penalty
+                actualAmount = amount - penalty;
+                alert(`RRSP withdrawal: $${amount} - $${penalty} penalty = $${actualAmount} received`);
+            }
+            
             gameState.accounts[account] -= amount;
-            gameState.remainingIncome += amount;
+            gameState.remainingIncome += actualAmount;
             gameState.incomeDistributed = false;
             input.value = '';
             updateUI();
             animateWithdrawal(account);
         }
 
-        // Withdraw all money from an account
+        // Withdraw all money from an account with penalties
         function withdrawAll(account) {
             const amount = gameState.accounts[account];
             
@@ -903,18 +970,79 @@
             }
             
             // Check if this would exceed the monthly income limit
-            if (gameState.remainingIncome + amount > gameState.monthlyIncome) {
+            let actualAmount = amount;
+            let penalty = 0;
+            
+            if (account === 'tfsa') {
+                penalty = Math.floor(amount * 0.1); // 10% penalty
+                actualAmount = amount - penalty;
+            } else if (account === 'rrsp') {
+                penalty = Math.floor(amount * 0.2); // 20% penalty
+                actualAmount = amount - penalty;
+            }
+            
+            if (gameState.remainingIncome + actualAmount > gameState.monthlyIncome) {
                 alert("You can't withdraw more than you've deposited this month!");
                 return;
             }
             
             gameState.accounts[account] = 0;
-            gameState.remainingIncome += amount;
+            gameState.remainingIncome += actualAmount;
             gameState.incomeDistributed = false;
             updateUI();
             animateWithdrawal(account);
             
-            alert(`Withdrew $${amount} from your ${account.toUpperCase()} account`);
+            if (penalty > 0) {
+                alert(`Withdrew $${amount} from your ${account.toUpperCase()} account ($${penalty} penalty applied)`);
+            } else {
+                alert(`Withdrew $${amount} from your ${account.toUpperCase()} account`);
+            }
+        }
+
+        // Transfer money between accounts
+        function transferMoney() {
+            const fromAccount = document.getElementById('transfer-from').value;
+            const toAccount = document.getElementById('transfer-to').value;
+            const amountInput = document.getElementById('transfer-amount');
+            const amount = parseInt(amountInput.value) || 0;
+            
+            if (fromAccount === toAccount) {
+                alert("You can't transfer to the same account!");
+                return;
+            }
+            
+            if (amount <= 0) {
+                alert("Please enter a positive amount!");
+                return;
+            }
+            
+            if (amount > gameState.accounts[fromAccount]) {
+                alert(`You don't have enough money in your ${fromAccount.toUpperCase()} account!`);
+                return;
+            }
+            
+            let actualAmount = amount;
+            let penalty = 0;
+            
+            // Apply penalties for transfers from savings accounts
+            if (fromAccount === 'tfsa' && toAccount !== 'tfsa') {
+                penalty = Math.floor(amount * 0.1); // 10% penalty
+                actualAmount = amount - penalty;
+                alert(`TFSA transfer: $${amount} - $${penalty} penalty = $${actualAmount} transferred`);
+            } else if (fromAccount === 'rrsp' && toAccount !== 'rrsp') {
+                penalty = Math.floor(amount * 0.2); // 20% penalty
+                actualAmount = amount - penalty;
+                alert(`RRSP transfer: $${amount} - $${penalty} penalty = $${actualAmount} transferred`);
+            }
+            
+            gameState.accounts[fromAccount] -= amount;
+            gameState.accounts[toAccount] += actualAmount;
+            amountInput.value = '';
+            updateUI();
+            
+            // Animate both accounts
+            animateWithdrawal(fromAccount);
+            animateDeposit(toAccount);
         }
 
         // Distribute monthly income evenly
