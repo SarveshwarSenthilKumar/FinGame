@@ -1,0 +1,6 @@
+Add more scenarios and fix current scenarios
+Separate counter for separate investments
+Allow user to choose an account with adequate punishment to deduct money from
+add punishments if the user decides to be cheap and do not make straight forward choices and punish if user chooses cheap option
+Add sprites an make more visually appealing
+Allow user to retrieve funds from any account
