@@ -503,6 +503,44 @@
             margin-bottom: 10px;
             color: var(--accent);
         }
+        
+        .financial-health {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+        
+        .health-bar {
+            width: 100px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: var(--success);
+            width: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .health-low {
+            background: var(--danger);
+        }
+        
+        .health-medium {
+            background: var(--warning);
+        }
+        
+        .cheap-choice-warning {
+            color: var(--warning);
+            font-weight: bold;
+            margin-top: 10px;
+            animation: pulse 1s infinite;
+        }
     </style>
 </head>
 <body>
@@ -519,6 +557,7 @@
             <p><strong>TFSA:</strong> Tax-Free Savings Account. Grows 2-5% each month but has withdrawal penalties.</p>
             <p><strong>RRSP:</strong> Retirement Savings. Grows 3-6% each month but has withdrawal penalties and taxes.</p>
             <p>Each round, a random scenario will affect your finances. Make smart choices to grow your wealth!</p>
+            <p><strong>Warning:</strong> Consistently choosing the cheapest options may have negative long-term consequences!</p>
         </div>
         
         <div class="month-indicator" id="month-indicator">Month 1: September</div>
@@ -537,8 +576,13 @@
                 <div class="stat-value" id="monthly-income">$100</div>
             </div>
             <div class="stat-card">
-                <div>Net Worth Change</div>
-                <div class="stat-value" id="net-worth-change">+$0</div>
+                <div>Financial Health</div>
+                <div class="stat-value" id="financial-health">100%</div>
+                <div class="financial-health">
+                    <div class="health-bar">
+                        <div class="health-fill" id="health-bar-fill"></div>
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -700,18 +744,21 @@
                 "May", "June", "July", "August"
             ],
             selectedScenarioOption: null,
-            selectedAccount: null
+            selectedAccount: null,
+            financialHealth: 100,
+            cheapChoiceCount: 0,
+            lastCheapChoiceRound: 0
         };
 
-        // Financial scenarios - FIXED and EXPANDED
+        // Financial scenarios - UPDATED with consequences for cheap choices
         const scenarios = [
             {
                 title: "Unexpected Gift",
                 description: "Your relative sends you money as a gift. How would you like to receive it?",
                 options: [
-                    { text: "Receive $50 cash", impact: 50, account: "chequing" },
-                    { text: "Invest $50 in TFSA", impact: 50, account: "tfsa", growth: 5 },
-                    { text: "Save $50 for retirement", impact: 50, account: "rrsp", growth: 7 }
+                    { text: "Receive $50 cash", impact: 50, account: "chequing", cheap: false },
+                    { text: "Invest $50 in TFSA", impact: 50, account: "tfsa", growth: 5, cheap: false },
+                    { text: "Save $50 for retirement", impact: 50, account: "rrsp", growth: 7, cheap: false }
                 ],
                 type: "income"
             },
@@ -719,19 +766,25 @@
                 title: "Car Trouble",
                 description: "Your car breaks down and needs repairs. How will you handle this?",
                 options: [
-                    { text: "Pay $50 for full repairs", impact: -50, account: "chequing" },
-                    { text: "Pay $25 for basic repairs", impact: -25, account: "chequing" },
-                    { text: "Use bike/transit (save money)", impact: 0, account: "chequing" }
+                    { text: "Pay $50 for full repairs", impact: -50, account: "chequing", cheap: false },
+                    { text: "Pay $25 for basic repairs", impact: -25, account: "chequing", cheap: true },
+                    { text: "Use bike/transit (save money)", impact: 0, account: "chequing", cheap: true }
                 ],
-                type: "expense"
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.3,
+                    message: "Your cheap repairs failed! You need to pay an additional $40 for proper repairs.",
+                    impact: -40,
+                    account: "chequing"
+                }
             },
             {
                 title: "Investment Opportunity",
                 description: "You have a chance to invest in a promising startup.",
                 options: [
-                    { text: "Invest $30 (low risk)", impact: -30, account: "tfsa", growth: 8 },
-                    { text: "Invest $50 (medium risk)", impact: -50, account: "tfsa", growth: 12 },
-                    { text: "Don't invest (no risk)", impact: 0, account: "chequing" }
+                    { text: "Invest $30 (low risk)", impact: -30, account: "tfsa", growth: 8, cheap: false },
+                    { text: "Invest $50 (medium risk)", impact: -50, account: "tfsa", growth: 12, cheap: false },
+                    { text: "Don't invest (no risk)", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "investment"
             },
@@ -739,9 +792,9 @@
                 title: "Part-Time Job Offer",
                 description: "You're offered a part-time job. How many hours will you work?",
                 options: [
-                    { text: "Work 5 hours ($25)", impact: 25, account: "chequing" },
-                    { text: "Work 10 hours ($50)", impact: 50, account: "chequing" },
-                    { text: "Work 15 hours ($75)", impact: 75, account: "chequing" }
+                    { text: "Work 5 hours ($25)", impact: 25, account: "chequing", cheap: false },
+                    { text: "Work 10 hours ($50)", impact: 50, account: "chequing", cheap: false },
+                    { text: "Work 15 hours ($75)", impact: 75, account: "chequing", cheap: false }
                 ],
                 type: "income"
             },
@@ -749,19 +802,25 @@
                 title: "Phone Upgrade",
                 description: "Your phone is getting old. What will you do?",
                 options: [
-                    { text: "Buy new phone ($60)", impact: -60, account: "chequing" },
-                    { text: "Buy refurbished ($35)", impact: -35, account: "chequing" },
-                    { text: "Keep current phone", impact: 0, account: "chequing" }
+                    { text: "Buy new phone ($60)", impact: -60, account: "chequing", cheap: false },
+                    { text: "Buy refurbished ($35)", impact: -35, account: "chequing", cheap: false },
+                    { text: "Keep current phone", impact: 0, account: "chequing", cheap: true }
                 ],
-                type: "expense"
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.4,
+                    message: "Your old phone stopped working! You need to buy a new one urgently for $70.",
+                    impact: -70,
+                    account: "chequing"
+                }
             },
             {
                 title: "Bonus from Work",
                 description: "You received a bonus! How will you use it?",
                 options: [
-                    { text: "Spend on fun ($40)", impact: 40, account: "chequing" },
-                    { text: "Save in TFSA ($40)", impact: 40, account: "tfsa", growth: 4 },
-                    { text: "Invest for retirement ($40)", impact: 40, account: "rrsp", growth: 6 }
+                    { text: "Spend on fun ($40)", impact: 40, account: "chequing", cheap: false },
+                    { text: "Save in TFSA ($40)", impact: 40, account: "tfsa", growth: 4, cheap: false },
+                    { text: "Invest for retirement ($40)", impact: 40, account: "rrsp", growth: 6, cheap: false }
                 ],
                 type: "income"
             },
@@ -769,19 +828,25 @@
                 title: "School Supplies",
                 description: "You need supplies for the new semester.",
                 options: [
-                    { text: "Buy all new ($45)", impact: -45, account: "chequing" },
-                    { text: "Buy some used ($25)", impact: -25, account: "chequing" },
-                    { text: "Share with friends ($15)", impact: -15, account: "chequing" }
+                    { text: "Buy all new ($45)", impact: -45, account: "chequing", cheap: false },
+                    { text: "Buy some used ($25)", impact: -25, account: "chequing", cheap: false },
+                    { text: "Share with friends ($15)", impact: -15, account: "chequing", cheap: true }
                 ],
-                type: "expense"
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.5,
+                    message: "Sharing supplies caused conflicts! You need to buy your own for $30.",
+                    impact: -30,
+                    account: "chequing"
+                }
             },
             {
                 title: "Tax Refund",
                 description: "You got a tax refund! How will you allocate it?",
                 options: [
-                    { text: "All to spending ($30)", impact: 30, account: "chequing" },
-                    { text: "Split spending/saving", impact: 30, account: "choose" },
-                    { text: "All to retirement ($30)", impact: 30, account: "rrsp", growth: 5 }
+                    { text: "All to spending ($30)", impact: 30, account: "chequing", cheap: false },
+                    { text: "Split spending/saving", impact: 30, account: "choose", cheap: false },
+                    { text: "All to retirement ($30)", impact: 30, account: "rrsp", growth: 5, cheap: false }
                 ],
                 type: "income"
             },
@@ -789,19 +854,25 @@
                 title: "Unexpected Medical Bill",
                 description: "You have an unexpected medical expense.",
                 options: [
-                    { text: "Pay full amount ($40)", impact: -40, account: "chequing" },
-                    { text: "Payment plan ($20 now)", impact: -20, account: "chequing" },
-                    { text: "Use emergency fund", impact: -40, account: "tfsa" }
+                    { text: "Pay full amount ($40)", impact: -40, account: "chequing", cheap: false },
+                    { text: "Payment plan ($20 now)", impact: -20, account: "chequing", cheap: true },
+                    { text: "Use emergency fund", impact: -40, account: "tfsa", cheap: false }
                 ],
-                type: "expense"
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.6,
+                    message: "The payment plan accumulated interest! You owe an additional $15.",
+                    impact: -15,
+                    account: "chequing"
+                }
             },
             {
                 title: "Stock Market Dip",
                 description: "The stock market has dropped significantly.",
                 options: [
-                    { text: "Sell investments (lock in losses)", impact: -30, account: "tfsa" },
-                    { text: "Buy more (bargain prices)", impact: -30, account: "tfsa", growth: 15 },
-                    { text: "Hold and wait", impact: 0, account: "tfsa" }
+                    { text: "Sell investments (lock in losses)", impact: -30, account: "tfsa", cheap: false },
+                    { text: "Buy more (bargain prices)", impact: -30, account: "tfsa", growth: 15, cheap: false },
+                    { text: "Hold and wait", impact: 0, account: "tfsa", cheap: true }
                 ],
                 type: "investment"
             },
@@ -809,9 +880,9 @@
                 title: "Side Hustle Opportunity",
                 description: "A friend offers you a chance to earn extra money.",
                 options: [
-                    { text: "Small project ($20)", impact: 20, account: "chequing" },
-                    { text: "Medium project ($40)", impact: 40, account: "chequing" },
-                    { text: "Large project ($60)", impact: 60, account: "chequing" }
+                    { text: "Small project ($20)", impact: 20, account: "chequing", cheap: false },
+                    { text: "Medium project ($40)", impact: 40, account: "chequing", cheap: false },
+                    { text: "Large project ($60)", impact: 60, account: "chequing", cheap: false }
                 ],
                 type: "income"
             },
@@ -819,11 +890,66 @@
                 title: "Subscription Services",
                 description: "You're paying for multiple subscription services.",
                 options: [
-                    { text: "Keep all ($25/month)", impact: -25, account: "chequing" },
-                    { text: "Cancel some ($15/month)", impact: -15, account: "chequing" },
-                    { text: "Cancel all", impact: 0, account: "chequing" }
+                    { text: "Keep all ($25/month)", impact: -25, account: "chequing", cheap: false },
+                    { text: "Cancel some ($15/month)", impact: -15, account: "chequing", cheap: false },
+                    { text: "Cancel all", impact: 0, account: "chequing", cheap: true }
                 ],
-                type: "expense"
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.3,
+                    message: "You missed important content! You had to resubscribe to one service for $20.",
+                    impact: -20,
+                    account: "chequing"
+                }
+            },
+            // NEW SCENARIOS WITH SPECIFIC PUNISHMENTS FOR CHEAP CHOICES
+            {
+                title: "Health Insurance",
+                description: "You need to choose a health insurance plan.",
+                options: [
+                    { text: "Comprehensive plan ($60)", impact: -60, account: "chequing", cheap: false },
+                    { text: "Basic plan ($40)", impact: -40, account: "chequing", cheap: false },
+                    { text: "No insurance (save money)", impact: 0, account: "chequing", cheap: true }
+                ],
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.7,
+                    message: "You had a medical emergency! Without insurance, you pay $100 out of pocket.",
+                    impact: -100,
+                    account: "chequing"
+                }
+            },
+            {
+                title: "Home Maintenance",
+                description: "Your home needs repairs. What approach do you take?",
+                options: [
+                    { text: "Hire professional ($80)", impact: -80, account: "chequing", cheap: false },
+                    { text: "DIY with quality materials ($50)", impact: -50, account: "chequing", cheap: false },
+                    { text: "Quick fix with cheap materials ($20)", impact: -20, account: "chequing", cheap: true }
+                ],
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.8,
+                    message: "Your quick fix failed and caused more damage! You need to pay $90 for proper repairs.",
+                    impact: -90,
+                    account: "chequing"
+                }
+            },
+            {
+                title: "Education Opportunity",
+                description: "You have a chance to take a course that could advance your career.",
+                options: [
+                    { text: "Enroll in premium course ($70)", impact: -70, account: "chequing", cheap: false },
+                    { text: "Take affordable online course ($30)", impact: -30, account: "chequing", cheap: false },
+                    { text: "Skip the course (save money)", impact: 0, account: "chequing", cheap: true }
+                ],
+                type: "investment",
+                cheapConsequence: {
+                    probability: 0.6,
+                    message: "You missed a promotion opportunity! A coworker who took the course got a $50 raise.",
+                    impact: -50, // Opportunity cost
+                    account: "chequing"
+                }
             }
         ];
 
@@ -866,6 +992,19 @@
             // Update progress bar
             const progressPercent = (gameState.round / gameState.totalRounds) * 100;
             document.getElementById('round-progress').style.width = `${progressPercent}%`;
+            
+            // Update financial health
+            document.getElementById('financial-health').textContent = `${gameState.financialHealth}%`;
+            const healthBar = document.getElementById('health-bar-fill');
+            healthBar.style.width = `${gameState.financialHealth}%`;
+            
+            if (gameState.financialHealth >= 70) {
+                healthBar.className = 'health-fill';
+            } else if (gameState.financialHealth >= 40) {
+                healthBar.className = 'health-fill health-medium';
+            } else {
+                healthBar.className = 'health-fill health-low';
+            }
             
             // Update income distribution status
             updateIncomeStatus();
@@ -1126,6 +1265,12 @@
                 // Format the option text with money amounts highlighted
                 let optionText = option.text;
                 optionText = optionText.replace(/\$(\d+)/g, '<span class="money-amount">$$1</span>');
+                
+                // Add warning for cheap choices
+                if (option.cheap) {
+                    optionText += '<div class="cheap-choice-warning">(Risky Choice)</div>';
+                }
+                
                 optionElement.innerHTML = optionText;
                 
                 optionElement.dataset.index = index;
@@ -1215,6 +1360,18 @@
             const option = gameState.selectedScenarioOption;
             const account = gameState.selectedAccount || option.account;
             
+            // Track cheap choices
+            if (option.cheap) {
+                gameState.cheapChoiceCount++;
+                gameState.lastCheapChoiceRound = gameState.round;
+                
+                // Reduce financial health for cheap choices
+                gameState.financialHealth = Math.max(0, gameState.financialHealth - 10);
+            } else {
+                // Slightly improve financial health for responsible choices
+                gameState.financialHealth = Math.min(100, gameState.financialHealth + 2);
+            }
+            
             // Apply the scenario effect
             if (option.impact !== 0) {
                 if (option.impact < 0 && Math.abs(option.impact) > gameState.accounts[account]) {
@@ -1238,11 +1395,35 @@
                 }
             }
             
+            // Apply cheap choice consequences if applicable
+            let consequenceMessage = "";
+            if (option.cheap && gameState.currentScenario.cheapConsequence) {
+                const consequence = gameState.currentScenario.cheapConsequence;
+                
+                // Check if consequence triggers based on probability
+                if (Math.random() < consequence.probability) {
+                    gameState.accounts[consequence.account] += consequence.impact;
+                    consequenceMessage = `<br><br>${consequence.message}`;
+                    
+                    // Further reduce financial health for negative consequences
+                    gameState.financialHealth = Math.max(0, gameState.financialHealth - 15);
+                }
+            }
+            
+            // Apply additional penalties for consecutive cheap choices
+            if (gameState.cheapChoiceCount >= 3 && gameState.round - gameState.lastCheapChoiceRound <= 2) {
+                const penalty = Math.floor(gameState.totalBalance * 0.05); // 5% penalty
+                gameState.accounts.chequing -= penalty;
+                consequenceMessage += `<br><br>Your pattern of cheap choices is costing you! You've been fined $${penalty} for poor financial decisions.`;
+                gameState.financialHealth = Math.max(0, gameState.financialHealth - 20);
+                gameState.cheapChoiceCount = 0; // Reset counter
+            }
+            
             // Close the scenario modal
             document.getElementById('scenario-modal').style.display = 'none';
             
             // Display the scenario in the main panel
-            displayScenario(gameState.currentScenario, option);
+            displayScenario(gameState.currentScenario, option, consequenceMessage);
             
             // Update UI
             updateUI();
@@ -1261,7 +1442,7 @@
         }
 
         // Display the current scenario in the main panel
-        function displayScenario(scenario, option) {
+        function displayScenario(scenario, option, consequenceMessage = "") {
             const scenarioCard = document.getElementById('scenario-card');
             const impactType = option.impact > 0 ? "positive" : option.impact < 0 ? "negative" : "neutral";
             
@@ -1282,19 +1463,23 @@
                 <div class="scenario-title">${scenario.title}</div>
                 <div class="scenario-description">${scenario.description}</div>
                 <div class="scenario-impact ${impactType}">
-                    ${impactText}
+                    ${impactText}${consequenceMessage}
                 </div>
             `;
             
             // Show modal with round results
-            showModal(`Month ${gameState.round - 1} Complete`, 
-                     `Your accounts have been updated based on your decision: "${option.text}"`);
+            let modalMessage = `Your accounts have been updated based on your decision: "${option.text}"`;
+            if (consequenceMessage) {
+                modalMessage += consequenceMessage;
+            }
+            
+            showModal(`Month ${gameState.round - 1} Complete`, modalMessage);
         }
 
         // Show modal with custom title and message
         function showModal(title, message) {
             document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-message').textContent = message;
+            document.getElementById('modal-message').innerHTML = message;
             document.getElementById('round-modal').style.display = 'flex';
         }
 
@@ -1322,8 +1507,17 @@
                 message = `You ended with $${finalBalance}. Don't worry, financial literacy takes practice!`;
             }
             
+            // Add feedback about financial health
+            if (gameState.financialHealth < 40) {
+                message += `<br><br>Your financial health score is low (${gameState.financialHealth}%). Try making more balanced choices next time!`;
+            } else if (gameState.financialHealth < 70) {
+                message += `<br><br>Your financial health score is okay (${gameState.financialHealth}%). You're making progress!`;
+            } else {
+                message += `<br><br>Your financial health score is excellent (${gameState.financialHealth}%)! You're making smart financial decisions.`;
+            }
+            
             document.getElementById('game-over-title').textContent = "Game Complete!";
-            document.getElementById('game-over-message').textContent = message;
+            document.getElementById('game-over-message').innerHTML = message;
             document.getElementById('game-over-modal').style.display = 'flex';
         }
 
@@ -1346,6 +1540,9 @@
             gameState.currentScenario = null;
             gameState.totalBalance = 100;
             gameState.previousBalance = 100;
+            gameState.financialHealth = 100;
+            gameState.cheapChoiceCount = 0;
+            gameState.lastCheapChoiceRound = 0;
             
             // Reset scenario card
             document.getElementById('scenario-card').innerHTML = `
