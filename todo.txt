@@ -1,3 +1,2 @@
 Add more scenarios and fix current scenarios
-Separate counter for separate investments
 Add sprites an make more visually appealing
