@@ -980,12 +980,6 @@
             gameState.totalBalance = gameState.accounts.chequing + gameState.accounts.tfsa + gameState.accounts.rrsp;
             document.getElementById('total-balance').textContent = `$${gameState.totalBalance}`;
             
-            // Update net worth change
-            const change = gameState.totalBalance - gameState.previousBalance;
-            const changeElement = document.getElementById('net-worth-change');
-            changeElement.textContent = `${change >= 0 ? '+' : ''}$${change}`;
-            changeElement.className = `stat-value ${change > 0 ? 'positive' : change < 0 ? 'negative' : ''}`;
-            
             // Update round info
             document.getElementById('current-round').textContent = gameState.round;
             
