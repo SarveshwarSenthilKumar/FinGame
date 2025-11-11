@@ -750,15 +750,15 @@
             lastCheapChoiceRound: 0
         };
 
-        // Financial scenarios - UPDATED with consequences for cheap choices
+        // Financial scenarios - UPDATED with more variety and different dollar amounts
         const scenarios = [
             {
                 title: "Unexpected Gift",
                 description: "Your relative sends you money as a gift. How would you like to receive it?",
                 options: [
-                    { text: "Receive $50 cash", impact: 50, account: "chequing", cheap: false },
-                    { text: "Invest $50 in TFSA", impact: 50, account: "tfsa", growth: 5, cheap: false },
-                    { text: "Save $50 for retirement", impact: 50, account: "rrsp", growth: 7, cheap: false }
+                    { text: "Receive $75 cash", impact: 75, account: "chequing", cheap: false },
+                    { text: "Invest $75 in TFSA", impact: 75, account: "tfsa", growth: 5, cheap: false },
+                    { text: "Save $75 for retirement", impact: 75, account: "rrsp", growth: 7, cheap: false }
                 ],
                 type: "income"
             },
@@ -766,15 +766,15 @@
                 title: "Car Trouble",
                 description: "Your car breaks down and needs repairs. How will you handle this?",
                 options: [
-                    { text: "Pay $50 for full repairs", impact: -50, account: "chequing", cheap: false },
-                    { text: "Pay $25 for basic repairs", impact: -25, account: "chequing", cheap: true },
+                    { text: "Pay $80 for full repairs", impact: -80, account: "chequing", cheap: false },
+                    { text: "Pay $45 for basic repairs", impact: -45, account: "chequing", cheap: true },
                     { text: "Use bike/transit (save money)", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.3,
-                    message: "Your cheap repairs failed! You need to pay an additional $40 for proper repairs.",
-                    impact: -40,
+                    message: "Your cheap repairs failed! You need to pay an additional $60 for proper repairs.",
+                    impact: -60,
                     account: "chequing"
                 }
             },
@@ -782,8 +782,8 @@
                 title: "Investment Opportunity",
                 description: "You have a chance to invest in a promising startup.",
                 options: [
-                    { text: "Invest $30 (low risk)", impact: -30, account: "tfsa", growth: 8, cheap: false },
-                    { text: "Invest $50 (medium risk)", impact: -50, account: "tfsa", growth: 12, cheap: false },
+                    { text: "Invest $40 (low risk)", impact: -40, account: "tfsa", growth: 8, cheap: false },
+                    { text: "Invest $65 (medium risk)", impact: -65, account: "tfsa", growth: 12, cheap: false },
                     { text: "Don't invest (no risk)", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "investment"
@@ -792,9 +792,9 @@
                 title: "Part-Time Job Offer",
                 description: "You're offered a part-time job. How many hours will you work?",
                 options: [
-                    { text: "Work 5 hours ($25)", impact: 25, account: "chequing", cheap: false },
-                    { text: "Work 10 hours ($50)", impact: 50, account: "chequing", cheap: false },
-                    { text: "Work 15 hours ($75)", impact: 75, account: "chequing", cheap: false }
+                    { text: "Work 5 hours ($35)", impact: 35, account: "chequing", cheap: false },
+                    { text: "Work 10 hours ($70)", impact: 70, account: "chequing", cheap: false },
+                    { text: "Work 15 hours ($105)", impact: 105, account: "chequing", cheap: false }
                 ],
                 type: "income"
             },
@@ -802,15 +802,15 @@
                 title: "Phone Upgrade",
                 description: "Your phone is getting old. What will you do?",
                 options: [
-                    { text: "Buy new phone ($60)", impact: -60, account: "chequing", cheap: false },
-                    { text: "Buy refurbished ($35)", impact: -35, account: "chequing", cheap: false },
+                    { text: "Buy new phone ($85)", impact: -85, account: "chequing", cheap: false },
+                    { text: "Buy refurbished ($50)", impact: -50, account: "chequing", cheap: false },
                     { text: "Keep current phone", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.4,
-                    message: "Your old phone stopped working! You need to buy a new one urgently for $70.",
-                    impact: -70,
+                    message: "Your old phone stopped working! You need to buy a new one urgently for $95.",
+                    impact: -95,
                     account: "chequing"
                 }
             },
@@ -818,9 +818,9 @@
                 title: "Bonus from Work",
                 description: "You received a bonus! How will you use it?",
                 options: [
-                    { text: "Spend on fun ($40)", impact: 40, account: "chequing", cheap: false },
-                    { text: "Save in TFSA ($40)", impact: 40, account: "tfsa", growth: 4, cheap: false },
-                    { text: "Invest for retirement ($40)", impact: 40, account: "rrsp", growth: 6, cheap: false }
+                    { text: "Spend on fun ($55)", impact: 55, account: "chequing", cheap: false },
+                    { text: "Save in TFSA ($55)", impact: 55, account: "tfsa", growth: 4, cheap: false },
+                    { text: "Invest for retirement ($55)", impact: 55, account: "rrsp", growth: 6, cheap: false }
                 ],
                 type: "income"
             },
@@ -828,15 +828,15 @@
                 title: "School Supplies",
                 description: "You need supplies for the new semester.",
                 options: [
-                    { text: "Buy all new ($45)", impact: -45, account: "chequing", cheap: false },
-                    { text: "Buy some used ($25)", impact: -25, account: "chequing", cheap: false },
-                    { text: "Share with friends ($15)", impact: -15, account: "chequing", cheap: true }
+                    { text: "Buy all new ($65)", impact: -65, account: "chequing", cheap: false },
+                    { text: "Buy some used ($35)", impact: -35, account: "chequing", cheap: false },
+                    { text: "Share with friends ($20)", impact: -20, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.5,
-                    message: "Sharing supplies caused conflicts! You need to buy your own for $30.",
-                    impact: -30,
+                    message: "Sharing supplies caused conflicts! You need to buy your own for $45.",
+                    impact: -45,
                     account: "chequing"
                 }
             },
@@ -844,9 +844,9 @@
                 title: "Tax Refund",
                 description: "You got a tax refund! How will you allocate it?",
                 options: [
-                    { text: "All to spending ($30)", impact: 30, account: "chequing", cheap: false },
-                    { text: "Split spending/saving", impact: 30, account: "choose", cheap: false },
-                    { text: "All to retirement ($30)", impact: 30, account: "rrsp", growth: 5, cheap: false }
+                    { text: "All to spending ($45)", impact: 45, account: "chequing", cheap: false },
+                    { text: "Split spending/saving", impact: 45, account: "choose", cheap: false },
+                    { text: "All to retirement ($45)", impact: 45, account: "rrsp", growth: 5, cheap: false }
                 ],
                 type: "income"
             },
@@ -854,15 +854,15 @@
                 title: "Unexpected Medical Bill",
                 description: "You have an unexpected medical expense.",
                 options: [
-                    { text: "Pay full amount ($40)", impact: -40, account: "chequing", cheap: false },
-                    { text: "Payment plan ($20 now)", impact: -20, account: "chequing", cheap: true },
-                    { text: "Use emergency fund", impact: -40, account: "tfsa", cheap: false }
+                    { text: "Pay full amount ($60)", impact: -60, account: "chequing", cheap: false },
+                    { text: "Payment plan ($30 now)", impact: -30, account: "chequing", cheap: true },
+                    { text: "Use emergency fund", impact: -60, account: "tfsa", cheap: false }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.6,
-                    message: "The payment plan accumulated interest! You owe an additional $15.",
-                    impact: -15,
+                    message: "The payment plan accumulated interest! You owe an additional $25.",
+                    impact: -25,
                     account: "chequing"
                 }
             },
@@ -870,8 +870,8 @@
                 title: "Stock Market Dip",
                 description: "The stock market has dropped significantly.",
                 options: [
-                    { text: "Sell investments (lock in losses)", impact: -30, account: "tfsa", cheap: false },
-                    { text: "Buy more (bargain prices)", impact: -30, account: "tfsa", growth: 15, cheap: false },
+                    { text: "Sell investments (lock in losses)", impact: -45, account: "tfsa", cheap: false },
+                    { text: "Buy more (bargain prices)", impact: -45, account: "tfsa", growth: 15, cheap: false },
                     { text: "Hold and wait", impact: 0, account: "tfsa", cheap: true }
                 ],
                 type: "investment"
@@ -880,9 +880,9 @@
                 title: "Side Hustle Opportunity",
                 description: "A friend offers you a chance to earn extra money.",
                 options: [
-                    { text: "Small project ($20)", impact: 20, account: "chequing", cheap: false },
-                    { text: "Medium project ($40)", impact: 40, account: "chequing", cheap: false },
-                    { text: "Large project ($60)", impact: 60, account: "chequing", cheap: false }
+                    { text: "Small project ($30)", impact: 30, account: "chequing", cheap: false },
+                    { text: "Medium project ($55)", impact: 55, account: "chequing", cheap: false },
+                    { text: "Large project ($80)", impact: 80, account: "chequing", cheap: false }
                 ],
                 type: "income"
             },
@@ -890,32 +890,31 @@
                 title: "Subscription Services",
                 description: "You're paying for multiple subscription services.",
                 options: [
-                    { text: "Keep all ($25/month)", impact: -25, account: "chequing", cheap: false },
-                    { text: "Cancel some ($15/month)", impact: -15, account: "chequing", cheap: false },
+                    { text: "Keep all ($35/month)", impact: -35, account: "chequing", cheap: false },
+                    { text: "Cancel some ($20/month)", impact: -20, account: "chequing", cheap: false },
                     { text: "Cancel all", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.3,
-                    message: "You missed important content! You had to resubscribe to one service for $20.",
-                    impact: -20,
+                    message: "You missed important content! You had to resubscribe to one service for $25.",
+                    impact: -25,
                     account: "chequing"
                 }
             },
-            // NEW SCENARIOS WITH SPECIFIC PUNISHMENTS FOR CHEAP CHOICES
             {
                 title: "Health Insurance",
                 description: "You need to choose a health insurance plan.",
                 options: [
-                    { text: "Comprehensive plan ($60)", impact: -60, account: "chequing", cheap: false },
-                    { text: "Basic plan ($40)", impact: -40, account: "chequing", cheap: false },
+                    { text: "Comprehensive plan ($75)", impact: -75, account: "chequing", cheap: false },
+                    { text: "Basic plan ($50)", impact: -50, account: "chequing", cheap: false },
                     { text: "No insurance (save money)", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.7,
-                    message: "You had a medical emergency! Without insurance, you pay $100 out of pocket.",
-                    impact: -100,
+                    message: "You had a medical emergency! Without insurance, you pay $120 out of pocket.",
+                    impact: -120,
                     account: "chequing"
                 }
             },
@@ -923,15 +922,15 @@
                 title: "Home Maintenance",
                 description: "Your home needs repairs. What approach do you take?",
                 options: [
-                    { text: "Hire professional ($80)", impact: -80, account: "chequing", cheap: false },
-                    { text: "DIY with quality materials ($50)", impact: -50, account: "chequing", cheap: false },
-                    { text: "Quick fix with cheap materials ($20)", impact: -20, account: "chequing", cheap: true }
+                    { text: "Hire professional ($95)", impact: -95, account: "chequing", cheap: false },
+                    { text: "DIY with quality materials ($60)", impact: -60, account: "chequing", cheap: false },
+                    { text: "Quick fix with cheap materials ($25)", impact: -25, account: "chequing", cheap: true }
                 ],
                 type: "expense",
                 cheapConsequence: {
                     probability: 0.8,
-                    message: "Your quick fix failed and caused more damage! You need to pay $90 for proper repairs.",
-                    impact: -90,
+                    message: "Your quick fix failed and caused more damage! You need to pay $110 for proper repairs.",
+                    impact: -110,
                     account: "chequing"
                 }
             },
@@ -939,15 +938,67 @@
                 title: "Education Opportunity",
                 description: "You have a chance to take a course that could advance your career.",
                 options: [
-                    { text: "Enroll in premium course ($70)", impact: -70, account: "chequing", cheap: false },
-                    { text: "Take affordable online course ($30)", impact: -30, account: "chequing", cheap: false },
+                    { text: "Enroll in premium course ($90)", impact: -90, account: "chequing", cheap: false },
+                    { text: "Take affordable online course ($45)", impact: -45, account: "chequing", cheap: false },
                     { text: "Skip the course (save money)", impact: 0, account: "chequing", cheap: true }
                 ],
                 type: "investment",
                 cheapConsequence: {
                     probability: 0.6,
-                    message: "You missed a promotion opportunity! A coworker who took the course got a $50 raise.",
-                    impact: -50, // Opportunity cost
+                    message: "You missed a promotion opportunity! A coworker who took the course got a $60 raise.",
+                    impact: -60, // Opportunity cost
+                    account: "chequing"
+                }
+            },
+            {
+                title: "Birthday Money",
+                description: "It's your birthday and you received money from family.",
+                options: [
+                    { text: "Spend on celebration ($65)", impact: 65, account: "chequing", cheap: false },
+                    { text: "Save half, spend half", impact: 65, account: "choose", cheap: false },
+                    { text: "Invest all in TFSA ($65)", impact: 65, account: "tfsa", growth: 6, cheap: false }
+                ],
+                type: "income"
+            },
+            {
+                title: "Computer Upgrade",
+                description: "Your computer is slowing down and affecting your work.",
+                options: [
+                    { text: "Buy new computer ($120)", impact: -120, account: "chequing", cheap: false },
+                    { text: "Upgrade components ($70)", impact: -70, account: "chequing", cheap: false },
+                    { text: "Keep using slow computer", impact: 0, account: "chequing", cheap: true }
+                ],
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.5,
+                    message: "Your computer crashed and you lost important work! You need to buy a new one for $130.",
+                    impact: -130,
+                    account: "chequing"
+                }
+            },
+            {
+                title: "Investment Windfall",
+                description: "One of your previous investments paid off!",
+                options: [
+                    { text: "Reinvest all ($80)", impact: 80, account: "tfsa", growth: 10, cheap: false },
+                    { text: "Take half, reinvest half", impact: 80, account: "choose", cheap: false },
+                    { text: "Withdraw all for spending", impact: 80, account: "chequing", cheap: false }
+                ],
+                type: "income"
+            },
+            {
+                title: "Pet Emergency",
+                description: "Your pet needs emergency veterinary care.",
+                options: [
+                    { text: "Full treatment ($110)", impact: -110, account: "chequing", cheap: false },
+                    { text: "Basic treatment only ($65)", impact: -65, account: "chequing", cheap: true },
+                    { text: "Use pet insurance", impact: -25, account: "chequing", cheap: false }
+                ],
+                type: "expense",
+                cheapConsequence: {
+                    probability: 0.4,
+                    message: "The basic treatment wasn't enough! Your pet needs additional care costing $75.",
+                    impact: -75,
                     account: "chequing"
                 }
             }
